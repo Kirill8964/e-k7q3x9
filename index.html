@@ -1109,6 +1109,22 @@ textarea.inp{font:inherit;line-height:1.4;padding:12px 14px;min-height:84px}
 .pcs>div{text-align:center;flex:1}.pcs b{display:block;font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}.pcs small{display:block;font-size:12px;color:var(--muted);margin-top:2px}
 .pcs.off b{color:var(--text-2)}
 .egg-cat{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px}.egg-cat>span{flex:1 0 100%;font-size:12.5px;color:var(--muted)}.egg-cat .chip{margin:0;min-width:46px;justify-content:center}
+/* 14.2: ограничения для нагрузки */
+.onb-gh{font-size:13px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px}
+.tog-row{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:12px 14px;border-radius:16px;background:var(--surface-2);border:1px solid var(--line-2);color:var(--text);margin-top:10px;min-height:48px}
+.tog-row span{flex:1;min-width:0}.tog-row b{display:block;font-size:15px}.tog-row small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px;line-height:1.35}
+.tsw{flex:none;position:relative;width:44px;height:26px;border-radius:13px;background:var(--surface-3);transition:background .2s}
+.tsw::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.tsw.on{background:var(--accent)}.tsw.on::after{transform:translateX(18px)}
+b.risk{display:block;margin-top:3px;color:#e8a33d;font-weight:600;font-size:12px;line-height:1.35}
+:root[data-theme="light"] b.risk{color:#a05e00}
+.lim-rules{margin:8px 0 2px;padding-left:18px;font-size:13px;line-height:1.45;color:var(--text)}.lim-rules li{margin:3px 0}
+.prev.hl{margin-top:12px}.prev.hl b{display:block;font-size:15px}.prev.hl small{display:block;margin-top:4px;line-height:1.45;color:var(--text)}
+.hl-b{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}.hl-b .btn{flex:1;min-width:140px}
+.lim-gate p{line-height:1.5}.lim-gate .btn.ghost{width:100%}
+.lim-note b{display:block}.lim-note small{display:block;margin-top:4px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.tsw,.tsw::after{transition:none}}
+.onb-fld #o2ln{width:auto;flex:1;min-width:0;font-size:18px;font-weight:650;margin-left:12px}.onb-fld #o2ln::placeholder{color:var(--muted);font-weight:500}
 
 </style>
 <script>try{var t=localStorage.getItem("bioforma.theme"),l=t==="light"||(t!=="dark"&&matchMedia("(prefers-color-scheme: light)").matches),a=localStorage.getItem("bioforma.accent");document.documentElement.dataset.theme=l?"light":"dark";if(/^(green|violet|orange|pink)$/.test(a||""))document.documentElement.dataset.accent=a;}catch(e){}</script>
@@ -1191,7 +1207,7 @@ PACE.mass = { wk: 4.345, per: 'в месяц', sign: '+', warn: 2.5, max: 3, opt
   { id: 'slow', n: 'Медленно', pct: 1, note: 'меньше лишнего жира, но и вес растёт медленнее' },
   { id: 'mid', n: 'Умеренно', pct: 1.5, note: 'обычный темп массонабора' },
   { id: 'fast', n: 'Быстро', pct: 2.5, note: 'вес растёт быстро, заметная часть набора — жир' }] };
-const paceSet = (dir, p) => dir === 'loss' ? PACE.loss : (p || db.profile).goalMode === 'mass' ? PACE.mass : PACE.gain;
+const paceSet = (dir, p) => dir === 'loss' ? (typeof limOf === 'function' && limOf(p || db.profile).length && PACE.lossLim ? PACE.lossLim : PACE.loss) : (p || db.profile).goalMode === 'mass' ? PACE.mass : PACE.gain;
 const PACE_IDS = ['slow', 'mid', 'fast', 'custom'];
 
 const newDb = () => ({
@@ -1285,6 +1301,9 @@ function migrate(o) {
   prof.months = cl(prof.months, .5, 60, 3); prof.activity = cl(prof.activity, 1, 2, 1.2);
   prof.activity = [1.2, 1.3, 1.4].reduce((a, x) => Math.abs(x - prof.activity) < Math.abs(a - prof.activity) ? x : a, 1.2);
   if (typeof prof.name === 'string') prof.name = prof.name.replace(/[<>"'`&]/g, '').trim().slice(0, 30); else delete prof.name;
+  prof.lim = (Array.isArray(prof.lim) ? prof.lim : []).filter((x, i, a) => ['spine', 'knees', 'shoulders', 'heart', 'surgery', 'other'].includes(x) && a.indexOf(x) === i);
+  prof.limNote = typeof prof.limNote === 'string' ? prof.limNote.replace(/[<>"'`&]/g, '').replace(/\s+/g, ' ').trim().slice(0, 60) : '';
+  prof.limGym = prof.limGym === true && prof.lim.length > 0; prof.hlNo = prof.hlNo === true;
   prof.med = (Array.isArray(prof.med) ? prof.med : []).filter((x, i, a) => ['preg', 'lact', 'kidney', 'insulin', 'ed'].includes(x) && a.indexOf(x) === i);
   /* 12.0: темп цели вместо срока в месяцах. Старый срок один раз пересчитываем в темп: если он близок (±15%) к готовому варианту — берём вариант */
   prof.paceKgW = cl(prof.paceKgW, 0, 5, 0);
@@ -2561,7 +2580,7 @@ function goalPlan(p, w) {
   if (diff < 0 && o.targBmi < 18.5) return { ...o, st: 'below' };
   if (Math.abs(diff) < .5) return { ...o, st: 'keep' };
   if (p.goalMode === 'recomp' && Math.abs(diff) <= 2) return { ...o, st: 'recomp' };
-  const P = paceSet(o.dir, p), toKgw = pct => w * pct / 100 / P.wk, opt = P.opts.find(x => x.id === p.paceId);
+  const P = paceSet(o.dir, p), toKgw = pct => w * pct / 100 / P.wk, opt = P.opts.find(x => x.id === p.paceId) || (P.lim && p.paceId === 'fast' ? { id: 'fast', pct: .75 } : null);
   let kgw, id = 'custom';
   if (opt) { kgw = toKgw(opt.pct); id = opt.id; }
   else if (p.paceId === 'custom' && p.paceKgW > 0) kgw = p.paceKgW;
@@ -4247,16 +4266,16 @@ function calcTrainPreview() {
     return { ...c, recSummary: rs.text, recPrior: rs.prior, eff: rs.eff };
   }
   if (TR.mode === 'cardio') {
-    const cfg = W_CARDIO[TR.cType] || W_CARDIO.run, byTime = TR.cType === 'bike' || TR.cType === 'swim';
+    const cfg = W_CARDIO[TR.cType] || W_CARDIO.run, byTime = TR.cType === 'bike' || TR.cType === 'swim' || TR.cType === 'lfk';
     if (!(TR.cMins > 0) || (!byTime && !(TR.cKm > 0))) return { kcal: 0, title: cfg[0], sub: byTime ? 'впиши время' : 'впиши дистанцию и время', muscles: [], recSummary: '', empty: true };
-    const km = TR.cKm > 0 ? TR.cKm : 0, mins = TR.cMins;
+    const km = TR.cKm > 0 && TR.cType !== 'lfk' ? TR.cKm : 0, mins = TR.cMins;
     let pace = '';
     if (km) { const tS = Math.round(mins / km * 60), pMin = Math.floor(tS / 60), pSec = tS % 60; pace = ' · темп ' + pMin + ':' + pad(pSec) + ' мин/км'; }
     /* 13.0: минус фон обычного дня (покой × коэффициент активности) — он уже есть в дневной норме.
        Велосипед с дистанцией — по скорости (Compendium of Physical Activities 2024): до 16 км/ч ≈ 5,8 MET, 16–19 — 6,8, 19–22 — 8, 22–25 — 10, быстрее — 12 */
     const pal = +db.profile.activity || 1.2, spd = km && mins ? km / (mins / 60) : 0;
     const bikeMet = spd ? (spd < 16 ? 5.8 : spd < 19 ? 6.8 : spd < 22 ? 8 : spd < 25 ? 10 : 12) : 6;
-    const gross = TR.cType === 'bike' ? bikeMet * w * mins / 60 : byTime ? mins * 8.8 * wf : km * w * cfg[1];
+    const gross = TR.cType === 'bike' ? bikeMet * w * mins / 60 : TR.cType === 'lfk' ? 2.8 * w * mins / 60 : byTime ? mins * 8.8 * wf : km * w * cfg[1];
     const kcal = Math.max(0, Math.round(gross - pal * w * mins / 60)), rs = draftReady();
     return { kcal, title: cfg[0] + (km ? ' ' + km + ' км' : ' ' + mins + ' мин'), sub: mins + ' мин' + pace, muscles: cfg[2], recSummary: rs.text, recPrior: rs.prior };
   }
@@ -4352,7 +4371,7 @@ function exCatHtml() {
       const L = rowsFor(g), open = TR.catGroup === g, nSel = L.filter(([x]) => sel.has(x.n)).length;
       if (!L.length) return '';
       return '<button class="excat-g' + (open ? ' open' : '') + '" data-a="exgrp" data-v="' + g + '" aria-expanded="' + open + '"><span>' + n + '</span><small>' + (nSel ? 'выбрано ' + nSel + ' из ' : '') + L.length + '</small><em>▾</em></button>' +
-        (open ? '<div class="excat-l">' + L.map(([x, i]) => '<button class="excat-i' + (sel.has(x.n) ? ' on' : '') + '" data-a="extog" data-v="' + i + '" aria-pressed="' + sel.has(x.n) + '"><i></i><span>' + esc(x.n) + (x.custom ? ' ★' : '') + '<small>' + mTxt(x) + '</small></span></button>').join('') + '</div>' : '');
+        (open ? '<div class="excat-l">' + L.map(([x, i]) => '<button class="excat-i' + (sel.has(x.n) ? ' on' : '') + '" data-a="extog" data-v="' + i + '" aria-pressed="' + sel.has(x.n) + '"><i></i><span>' + esc(x.n) + (x.custom ? ' ★' : '') + '<small>' + mTxt(x) + (x.custom ? '' : exRiskTag(x.n)) + '</small></span></button>').join('') + '</div>' : '');
     }).join('') +
     (sel.size ? '<button class="btn main excat-add" data-a="exaddsel">' + ico('plus') + ' Добавить выбранные (' + sel.size + ')</button>'
       : '<div class="cap excat-hint">Отметь нужные упражнения — вес подставится из прошлого раза, а цель на подход подскажет, сколько повторов сделать.</div>') + '</div>';
@@ -4372,7 +4391,7 @@ function renderExSug(idx, q) {
     const cIdx = cat.indexOf(x);
     const pTxt = x.p.map(m => MUSCLES[m]).join(', ');
     const sTxt = x.s.length ? ' (косв: ' + x.s.map(m => MUSCLES[m]).join(', ') + ')' : '';
-    return '<button data-a="expick" data-v="' + idx + '|' + cIdx + '"><span>' + esc(x.n) + (x.custom ? ' ★' : '') + '</span><small>' + pTxt + sTxt + '</small></button>';
+    return '<button data-a="expick" data-v="' + idx + '|' + cIdx + '"><span>' + esc(x.n) + (x.custom ? ' ★' : '') + '</span><small>' + pTxt + sTxt + (x.custom ? '' : exRiskTag(x.n)) + '</small></button>';
   }).join('');
 
   const addCustomBtn = (s.length >= 3 && !cat.some(x => x.n.toLowerCase() === s))
@@ -5484,7 +5503,8 @@ const FA = {
       n++;
     });
     TR.catSel = []; TR.catOpen = false; TR.catGroup = null; TR.catZone = null;
-    render(); toast('Добавлено: ' + n + ' ' + ruPl(n, 'упражнение', 'упражнения', 'упражнений'));
+    const rk = names.map(nm => [nm, exRisk(nm)]).filter(x => x[1]);
+    render(); toast('Добавлено: ' + n + ' ' + ruPl(n, 'упражнение', 'упражнения', 'упражнений'), rk.length ? { sub: '⚠ ' + rk[0][0] + ' — ' + rk[0][1].why + '. Делай, только если врач разрешил именно это.' } : undefined);
   },
   exfor: v => {
     if (!ZONES[v]) return;
@@ -6061,6 +6081,7 @@ function recoveryMiniHtml() {
     '<div class="rg ok"><span>' + (any ? 'Готовы к нагрузке' : Object.keys(gr.rem).length ? 'Почти всё восстановилось' : 'Все мышцы свежие') + '</span><b>' + (any ? cap1(fresh.slice(0, 4).join(', ')) || '—' : 'Можно тренировать любые группы') + '</b></div>' +
     '</div></div>' + (() => {
       if (view !== todayKey() || TR.sets.length || TR.started || (peek(view).workouts || []).some(w => w.type === 'gym' || w.type === 'bw')) return '';
+      if (limGate()) return (peek(view).workouts || []).some(w => w.cType === 'lfk') ? '' : '<button class="t-day" data-a="lfkgo"><span class="ti">' + ico('plus') + '</span><span class="tx"><small>По программе врача</small><b>ЛФК и движение</b></span>' + ico('right') + '</button>';
       const rw = recWorkout(view); if (!rw || !rw.best) return '';
       const g = weekGoal(), wn = g ? weekWorkouts(todayKey()).n : 0;
       return '<button class="t-day" data-a="recgo" data-v="' + rw.best.i + '"><span class="ti">' + ico('play') + '</span><span class="tx"><small>Тренировка дня</small><b>' + esc(rw.best.t.name) + '</b></span>' +
@@ -6440,7 +6461,7 @@ function renderTrain() {
     BODY_UI.mode.train = 'plan';
     const form = TR.mode === 'cardio'
       ? '<h3 style="margin-bottom:10px">Вид кардио</h3><div class="chips">' + Object.keys(W_CARDIO).map(k => '<button class="chip' + (TR.cType === k ? ' on' : '') + '" data-a="tcardio" data-v="' + k + '">' + W_CARDIO[k][0] + '</button>').join('') + '</div>' +
-        '<div class="two"><label class="cap">Дистанция, км<input autocomplete="off" class="inp" type="text" inputmode="decimal" data-i="ckm" value="' + (TR.cKm == null ? '' : TR.cKm) + '" placeholder="км" style="margin-top:4px"></label>' +
+        (TR.cType === 'lfk' ? '<p class="cap" style="margin:4px 0 8px">Занятие по программе врача: впиши, сколько минут оно длилось.</p><div class="two">' : '<div class="two"><label class="cap">Дистанция, км<input autocomplete="off" class="inp" type="text" inputmode="decimal" data-i="ckm" value="' + (TR.cKm == null ? '' : TR.cKm) + '" placeholder="км" style="margin-top:4px"></label>') +
         '<label class="cap">Время, мин<input class="inp" type="number" inputmode="numeric" data-i="cmins" value="' + (TR.cMins == null ? '' : TR.cMins) + '" placeholder="мин" style="margin-top:4px"></label></div>'
       : '<h3 style="margin-bottom:6px">Шаги за день</h3><div class="wrow"><span>Шагов</span><label class="gin"><input type="number" id="stIn" data-i="tsteps" step="500" inputmode="numeric" value="' + (TR.steps == null ? '' : TR.steps) + '" placeholder="0"></label></div>' +
         '<div class="chips">' + [5000, 8000, 12000, 20000].map(n => '<button class="chip" data-a="stepset" data-v="' + n + '">' + n.toLocaleString('ru-RU') + '</button>').join('') + '</div>';
@@ -6448,6 +6469,7 @@ function renderTrain() {
       '<button class="btn main" data-a="tadd">' + ico('plus') + ' Записать</button></div>' + trainHistoryHtml(d);
   }
   const active = TR.sets.length > 0 || TR.started || TR.editId;
+  if (!active && limGate()) { BODY_UI.mode.train = 'rec'; return modeSegHtml() + limGateHtml() + trainHistoryHtml(d) + (isT ? pastWorkoutsHtml() : ''); }
   if (!active) {
     BODY_UI.mode.train = 'rec';
     const gr = groupRec(view), L = lastSetWorkout(TR.mode), tpls = DEFAULT_TEMPLATES.concat(db.templates || []);
@@ -6466,7 +6488,7 @@ function renderTrain() {
           '<h3>' + (gr.tired.length ? 'Готовы: ' + (gr.fresh.slice(0, 3).map(g => MUSCLES[g].toLowerCase()).join(', ') || 'отдых') : Object.keys(gr.rem).length ? 'Почти всё восстановилось' : 'Все мышцы свежие') + '</h3>' +
           '<p>' + (gr.tired.length ? 'Зелёное можно нагружать, жёлтое ещё восстанавливается.' : Object.keys(gr.rem).length ? 'Остаточная усталость пройдёт в течение дня — можно тренировать любые группы.' : 'Можно тренировать любые группы.') + '</p>' + ready +
           '<button class="btn main" data-a="tsess">' + ico('play') + (isT ? ' Начать тренировку' : ' Записать тренировку') + '</button></div>';
-    return modeSegHtml() + hero +
+    return modeSegHtml() + limTrainNoteHtml() + hero +
       '<div class="sec">Быстрый старт</div><div class="card" style="padding:6px 14px">' +
         (L ? '<button class="tpl" data-a="trepeat2"><span class="ti">' + ico('repeat') + '</span><span class="tx"><b>Повторить прошлую</b><small>' + esc(L.w.title) + ' · ' + esc(dateShort(L.k || view)) + '</small></span>' + ico('right') + '</button>' : '') +
         tpls.map((t, i) => rw && rw.best && rw.best.i === i ? '' : '<button class="tpl" data-a="tplgo" data-v="' + i + '"><span class="ti">' + ico('list') + '</span><span class="tx"><b>' + esc(t.name) + '</b><small>' + esc(t.exs.join(', ')) + '</small></span>' + ico('right') + '</button>').join('') +
@@ -6636,7 +6658,7 @@ function goalsFormHtml() {
       '<label class="cap">Рост, см<input class="inp" type="number" data-i="pheight" value="' + (p.height == null ? '' : p.height) + '"></label>' +
       '<label class="cap">Старт, кг<input autocomplete="off" inputmode="decimal" class="inp" type="text" data-i="pstartw" value="' + (p.startWeight == null ? '' : p.startWeight) + '"></label></div>' +
       '<h3 style="margin:16px 0 8px;font-size:15px">Тренировок в неделю</h3><div class="chips" style="margin:0">' + [['0', 'Пока нет'], ['2', '1–2'], ['3', '3–4'], ['5', '5+']].map(([v, n]) => '<button class="chip' + (((p.survey || {}).plan || '') === v ? ' on' : '') + '" data-a="planset" data-v="' + v + '">' + n + '</button>').join('') + '</div>' +
-      '<h3 style="margin:16px 0 8px;font-size:15px">Здоровье</h3><div id="pMed">' + medChipsHtml() + '</div></div>';
+      '<h3 style="margin:16px 0 8px;font-size:15px">Здоровье</h3><div id="pMed">' + medChipsHtml() + '</div><div id="pLim">' + limChipsHtml() + '</div></div>';
 }
 const isStandalone = () => { try { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; } catch (e) { return false; } };
 const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent || '') || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -6729,13 +6751,14 @@ function onb2Init() {
   const p = db.profile, s = p.survey || {}, lw = Object.values(db.days).some(x => x && x.weight != null) ? latestWeight(todayKey()) : null;
   Object.assign(ONB2, { st: 0, err: '', medYes: false, goal: s.goal ? p.goalMode : null, gender: p.gender || 'male', age: p.age, height: p.height, name: p.name || '',
     cur: lw || p.startWeight, targ: p.targetWeight, act: s.act || null, hist: s.hist || null, plan: s.plan || null, med: Array.isArray(p.med) ? p.med.slice() : [],
+    lim: limOf(p).slice(), limNote: p.limNote || '', limGym: !!p.limGym, hlNo: false,
     paceId: PACE_IDS.includes(p.paceId) && p.paceId !== 'custom' ? p.paceId : 'mid' });
 }
 function onb2With(fn) {
   const p = db.profile, keep = JSON.parse(JSON.stringify(p)), cc = () => { ADAPT_CACHE.clear(); FB_CACHE.clear(); REC_CACHE.clear(); };
   try {
     Object.assign(p, { gender: ONB2.gender, age: ONB2.age, height: ONB2.height, startWeight: ONB2.cur, targetWeight: ONB2.targ || ONB2.cur, activity: +ONB2.act || 1.2,
-      goalMode: ONB2.goal || 'lean', paceId: ONB2.paceId, paceKgW: 0, med: ONB2.med.slice(), survey: { ...(p.survey || {}), act: ONB2.act, hist: ONB2.hist, plan: ONB2.plan } });
+      goalMode: ONB2.goal || 'lean', paceId: ONB2.paceId, paceKgW: 0, med: ONB2.med.slice(), lim: (ONB2.lim || []).slice(), limGym: !!ONB2.limGym, limNote: ONB2.limNote || '', survey: { ...(p.survey || {}), act: ONB2.act, hist: ONB2.hist, plan: ONB2.plan } });
     cc(); return fn();
   } finally { Object.keys(p).forEach(k => delete p[k]); Object.assign(p, keep); cc(); }
 }
@@ -6781,7 +6804,7 @@ function renderOnboardingModal() {
   } else if (step === 'body') {
     const f = (id, n, sub, v, u, mode) => '<label class="onb-fld"><span class="fl">' + n + (sub ? '<small>' + sub + '</small>' : '') + '</span><input id="' + id + '" inputmode="' + mode + '" autocomplete="off" value="' + (v == null || isNaN(v) ? '' : String(v).replace('.', ',')) + '" placeholder="0"><span class="fu">' + u + '</span></label>';
     body = '<div class="onb-k">Шаг 3</div><h2 class="onb-q">Немного о тебе</h2><p class="onb-sub">Нужно для точного расчёта. Данные остаются только на этом устройстве.</p><div class="onb-f">' +
-      '<label class="onb-fld"><span class="fl">Имя<small>необязательно</small></span><input id="o2n" autocomplete="given-name" maxlength="30" value="' + esc(ONB2.name || '') + '" placeholder="Как к тебе обращаться"></label>' +
+      '<label class="onb-fld"><span class="fl">Имя<small>необязательно</small></span><input id="o2n" autocomplete="given-name" maxlength="30" value="' + esc(ONB2.name || '') + '" placeholder="Например, Кирилл"></label>' +
       f('o2age', 'Возраст', '', ONB2.age, 'лет', 'numeric') + f('o2h', 'Рост', '', ONB2.height, 'см', 'numeric') + f('o2w', 'Вес сейчас', 'лучше утром, до еды', ONB2.cur, 'кг', 'decimal') + '</div>' +
       '<div class="onb-err" role="alert">' + esc(ONB2.err || '') + '</div>';
   } else if (step === 'target') {
@@ -6789,7 +6812,7 @@ function renderOnboardingModal() {
     if (ONB2.targ > 0) {
       const r = onb2Plan(), pl = r.pl;
       if (pl.st === 'pace') {
-        const P = paceSet(pl.dir, { goalMode: ONB2.goal });
+        const P = paceSet(pl.dir, { goalMode: ONB2.goal, lim: ONB2.lim });
         paceHtml = '<h3 style="margin:22px 0 10px;font-size:16px">Темп</h3><div class="onb-opts">' + P.opts.map(o => {
           const kg = ONB2.cur * o.pct / 100; return onb2Opt('onb2pace', o.id, ONB2.paceId === o.id, '', o.n + ' · ' + (pl.dir === 'loss' ? '−' : '+') + n1c(kg) + ' кг ' + P.per, o.note + (o.rec ? ' · рекомендую' : ''));
         }).join('') + '</div>' + (r.eta ? '<div class="eta" style="margin-top:12px">' + ico('target') + '<span><b>Цель ' + etaText(r.eta.k) + '</b><small>примерно ' + r.eta.wk + ' ' + ruPl(r.eta.wk, 'неделя', 'недели', 'недель') + ' при этом темпе</small></span></div>' : '');
@@ -6810,14 +6833,20 @@ function renderOnboardingModal() {
     body = '<div class="onb-k">Шаг 7</div><h2 class="onb-q">Сколько тренировок в неделю планируешь?</h2><p class="onb-sub">Можно будет поменять в любой момент.</p><div class="onb-opts">' +
       SURVEY[2].o.map(o => onb2Opt('onb2planq', o[0], ONB2.plan === o[0], '', o[1], '')).join('') + '</div>';
   } else if (step === 'health') {
-    const q = SURVEY[5], fem = ONB2.gender === 'female';
-    if (ONB2.medQ || (!ONB2.medYes && !ONB2.med.length)) {
-      body = '<div class="onb-k">Шаг 8</div><h2 class="onb-q">Есть ли ограничения по здоровью?</h2><p class="onb-sub">Например, беременность или болезнь, при которой питание назначает врач. Ответ хранится только на этом устройстве.</p><div class="onb-opts">' +
+    const q = SURVEY[5], fem = ONB2.gender === 'female', lim = ONB2.lim || [];
+    if (ONB2.medQ || (!ONB2.medYes && !ONB2.med.length && !lim.length)) {
+      body = '<div class="onb-k">Шаг 8</div><h2 class="onb-q">Есть ли ограничения по здоровью?</h2><p class="onb-sub">Болезнь, при которой питание назначает врач, или проблема со спиной, суставами, сердцем, недавняя операция. Ответ хранится только на этом устройстве.</p><div class="onb-opts">' +
         onb2Opt('onb2medno', '1', false, '✅', 'Нет', '') + onb2Opt('onb2medyes', '1', false, '🩺', 'Да, есть', '') + '</div>';
     } else {
-      body = '<div class="onb-k">Шаг 8</div><h2 class="onb-q">Что именно?</h2><p class="onb-sub">Отметь всё, что подходит.</p><div class="onb-opts">' +
+      body = '<div class="onb-k">Шаг 8</div><h2 class="onb-q">Что именно?</h2><p class="onb-sub">Отметь всё, что подходит.</p>' +
+        '<h3 class="onb-gh">Питание назначает врач</h3><div class="onb-opts">' +
         q.o.filter(o => fem || (o[0] !== 'preg' && o[0] !== 'lact')).map(o => onb2Opt('onb2med', o[0], ONB2.med.includes(o[0]), '', o[1], '')).join('') + '</div>' +
-        '<div class="prev warn2" style="margin-top:12px">Формулы рассчитаны на здоровых взрослых. При этих состояниях покажу только ориентир для поддержания веса — без похудения и набора. Питание лучше согласовать с врачом.</div>';
+        '<h3 class="onb-gh">Ограничения для нагрузки</h3><div class="onb-opts">' +
+        LIM_KEYS.map(k => onb2Opt('onb2lim', k, lim.includes(k), '', LIM_TXT[k].n, LIM_TXT[k].sub)).join('') + '</div>' +
+        (lim.includes('other') ? '<label class="onb-fld" style="margin-top:10px"><span class="fl">Что именно?</span><input id="o2ln" data-i="o2ln" maxlength="60" autocomplete="off" value="' + esc(ONB2.limNote || '') + '" placeholder="Например, сколиоз"></label><div id="o2lg">' + limGuessHtml() + '</div>' : '') +
+        (lim.length ? '<button class="tog-row" data-a="onb2limgym" role="switch" aria-checked="' + !!ONB2.limGym + '" style="margin-top:10px"><span><b>Врач уже разрешил силовые</b><small>Если нет — в тренировках будут ЛФК и движение</small></span><i class="tsw' + (ONB2.limGym ? ' on' : '') + '"></i></button>' : '') +
+        (ONB2.med.length ? '<div class="prev warn2" style="margin-top:12px">Формулы рассчитаны на здоровых взрослых. При болезнях из первого списка покажу только ориентир для поддержания веса — без похудения и набора. Питание лучше согласовать с врачом.</div>' : '') +
+        (lim.length ? '<div class="prev warn2" style="margin-top:12px">' + (ONB2.limGym ? 'Силовые — с пометками ⚠: опасное при твоих ограничениях не попадёт в подбор.' : 'Тренировки: ЛФК и движение по программе врача, силовые — после его разрешения.') + ' Питание считаю обычно, худеть — только мягко. Это не замена врачу.</div>' : '');
       foot = next('Далее');
     }
   } else if (step === 'build') {
@@ -6831,6 +6860,9 @@ function renderOnboardingModal() {
         '<div><b style="color:var(--fat)">' + b.f + ' г</b><span>жиры</span></div><div><b style="color:var(--carb)">' + b.c + ' г</b><span>углеводы</span></div></div>' +
       (r.eta ? '<div class="eta">' + ico('target') + '<span><b>' + n1c(ONB2.targ) + ' кг ' + etaText(r.eta.k) + '</b><small>если держаться плана · дату уточню по реальному весу</small></span></div>' + projSvg(ONB2.cur, ONB2.targ, r.eta.k) : '') +
       (b.med && b.med.length ? '<div class="prev warn2">Особый режим: только поддержание веса. Питание согласуй с врачом.</div>' : '') +
+      (ONB2.hlNo ? '' : healthyLossHtml(onb2With(() => healthyLoss(db.profile, ONB2.cur)), 'onb2hl', 'onb2hlno')) +
+      ((ONB2.lim || []).length && pl.st === 'pace' && pl.dir === 'loss' && pl.level === 'cap' ? '<div class="prev warn2">При ограничениях по здоровью худеть лучше мягко: считаю по безопасному темпу −' + n1c(pl.kgwUsed) + ' кг в неделю.</div>' : '') +
+      ((ONB2.lim || []).length && !ONB2.limGym && pl.st === 'pace' && pl.dir === 'gain' ? '<div class="prev warn2">Без силовых тренировок набор веса будет в основном за счёт жира. Если врач разрешит силовые — отметь это в профиле.</div>' : '') +
       '<p class="onb-note">После тренировок норма растёт: приложение добавит часть потраченных калорий. Через 2 недели записей уточню расход по твоему реальному весу.</p>';
     foot = next('Поехали!', 'onb2fin');
   } else if (step === 'pro') {
@@ -6849,7 +6881,7 @@ function onb2Go(d) { ONB2.err = ''; ONB2.st = clamp(ONB2.st + d, 0, ONB_STEPS.le
 function onb2Finish(pro) {
   const p = db.profile, hist = Object.keys(db.days).some(k => { const x = db.days[k]; return x && ((x.food || []).length || (x.workouts || []).length || x.weight != null); });
   Object.assign(p, { gender: ONB2.gender, age: ONB2.age, height: ONB2.height, activity: +ONB2.act || p.activity || 1.2, goalMode: ONB2.goal || 'lean', targetWeight: ONB2.targ || ONB2.cur,
-    paceId: ONB2.paceId || 'mid', paceKgW: 0, med: ONB2.med.slice(), keepChoice: false, onboarded: true,
+    paceId: ONB2.paceId || 'mid', paceKgW: 0, med: ONB2.med.slice(), lim: (ONB2.lim || []).slice(), limGym: !!ONB2.limGym && (ONB2.lim || []).length > 0, limNote: limNoteClean(ONB2.limNote), keepChoice: false, onboarded: true,
     survey: { ...(p.survey || {}), goal: 1, act: ONB2.act || undefined, hist: ONB2.hist || undefined, plan: ONB2.plan || undefined, med: '1' } });
   if (!hist || p.startWeight == null) { p.startWeight = ONB2.cur; p.startDate = todayKey(); }
   if (!hist) db.settings.ssOn = 1;
@@ -7026,8 +7058,9 @@ function recWorkout(k) {
     if (w.type !== 'gym' && w.type !== 'bw') return;
     (Array.isArray(w.muscles) ? w.muscles : []).forEach(g => { lastG[g] = dk; });
   }));
+  if (limGate()) return null;   // 14.2: силовые закрыты до разрешения врача
   const L = tpls.map((t, i) => {
-    const gs = new Set(); t.exs.forEach(n => zonesToGroups(exZonesC(n).z).p.forEach(g => gs.add(g)));
+    const gs = new Set(); safeExs(t.exs).exs.forEach(n => zonesToGroups(exZonesC(n).z).p.forEach(g => gs.add(g)));
     const groups = [...gs], tired = groups.filter(g => (gr.rem[g] || 0) >= 12);
     const ks = groups.map(g => lastG[g]).filter(Boolean).sort(), last = ks.length ? ks[ks.length - 1] : null;
     const since = last ? Math.round((kDate(k) - kDate(last)) / 864e5) : null;
@@ -7734,6 +7767,7 @@ function swapCands(name) {
     const ks = new Set([...k0, ...Object.keys(z)]); let dot = 0; ks.forEach(k => { dot += (z0[k] || 0) * (z[k] || 0); });
     const sim = dot / (n0 * Math.hypot(...Object.values(z)) || 1), prev = lastExPerf(x.n, view);
     const score = sim + (prev ? .1 : 0) + (stem && x.n.toLowerCase().includes(stem) ? .06 : 0) - (!bw0 && isBwEx(x.n) ? .25 : 0);   // тяжёлое не меняем на «без веса»
+    if (!x.custom && exRisk(x.n)) return null;   // 14.2: при ограничении опасное не предлагаем
     return sim >= .6 ? { n: x.n, sim, prev, score, bw: !bw0 && isBwEx(x.n) } : null;
   }).filter(Boolean).sort((a, b) => b.score - a.score).slice(0, 8);
 }
@@ -8034,7 +8068,10 @@ Object.assign(A, {
   // шаблон: вес — рабочий из прошлого раза (или цель, если вес тот же), повторы вписывает человек
   tplgo: v => {
     const t = DEFAULT_TEMPLATES.concat(db.templates || [])[+v]; if (!t) return;
-    TR.sets = t.exs.map(n => {
+    if (limGate()) { A.tab('train'); return; }
+    const sf = safeExs(t.exs);
+    if (sf.swapped.length) setTimeout(() => toast('Учёл ограничения', { icon: 'shield', sub: sf.swapped.map(([a, b]) => b ? a + ' → ' + b : a + ' — убрано').join('; ') + '.' }), 60);
+    TR.sets = sf.exs.map(n => {
       const g = overloadTarget(n), S = exSessions(n, view, 1)[0], W = S && S.rows.some(r => r.kg) ? Math.max(...S.rows.map(r => r.kg)) : null;
       const kg = g && !g.bw ? (g.up ? W : g.kg) : W;
       return { ex: n, rows: [0, 1, 2].map(() => ({ kg: kg == null ? null : kg, reps: null, done: false })) };
@@ -8103,6 +8140,11 @@ Object.assign(A, {
       Object.assign(ONB2, { age, height: h, cur: Math.round(w * 10) / 10 });
       if (!ONB2.targ) ONB2.targ = ONB2.goal === 'cut' ? Math.round(ONB2.cur * .93) : ONB2.goal === 'mass' || ONB2.goal === 'lean' ? Math.round(ONB2.cur * 1.04) : ONB2.cur;
     }
+    if (st === 'health') {
+      const ln = qs('#o2ln'); if (ln) ONB2.limNote = limNoteClean(ln.value);
+      if ((ONB2.lim || []).length && ONB2.paceId === 'fast') ONB2.paceId = 'mid';
+      if (!(ONB2.lim || []).length) ONB2.limGym = false;
+    }
     if (st === 'target') {
       const t = onbNum('o2t'), v = isNaN(t) ? ONB2.cur : t;
       const msg = onbCheck({ age: ONB2.age, height: ONB2.height, cur: ONB2.cur, targ: v });
@@ -8113,8 +8155,8 @@ Object.assign(A, {
     }
     onb2Go(1);
   },
-  onb2back: () => { if (ONB_STEPS[ONB2.st] === 'health' && !ONB2.medQ && (ONB2.medYes || (ONB2.med || []).length)) { ONB2.medQ = true; ONB2.err = ''; renderOnboardingModal(); return; }   // из списка болезней — назад к «Есть ли ограничения?»
-    if (ONB_STEPS[ONB2.st] === 'health' && !(ONB2.med || []).length) ONB2.medYes = false;   // ничего не отмечено — в следующий раз снова спросим «Да / Нет»
+  onb2back: () => { if (ONB_STEPS[ONB2.st] === 'health' && !ONB2.medQ && (ONB2.medYes || (ONB2.med || []).length || (ONB2.lim || []).length)) { ONB2.medQ = true; ONB2.err = ''; renderOnboardingModal(); return; }   // из списка болезней — назад к «Есть ли ограничения?»
+    if (ONB_STEPS[ONB2.st] === 'health' && !(ONB2.med || []).length && !(ONB2.lim || []).length) ONB2.medYes = false;   // ничего не отмечено — в следующий раз снова спросим «Да / Нет»
     ONB2.medQ = false; let s = ONB2.st - 1; if (ONB_STEPS[s] === 'build') s--; ONB2.st = Math.max(0, s); ONB2.err = ''; renderOnboardingModal(); },
   onb2goal: v => { if (!GOAL_MODES[v]) return; ONB2.goal = v; onb2Go(1); },
   onb2sex: v => { ONB2.gender = v === 'female' ? 'female' : 'male'; if (ONB2.gender === 'male') ONB2.med = ONB2.med.filter(x => x !== 'preg' && x !== 'lact'); onb2Go(1); },
@@ -8122,7 +8164,7 @@ Object.assign(A, {
   onb2act: v => { if (!SURVEY[0].o.some(o => o[0] === v)) return; ONB2.act = v; onb2Go(1); },
   onb2hist: v => { if (!SURVEY[1].o.some(o => o[0] === v)) return; ONB2.hist = v; onb2Go(1); },
   onb2planq: v => { if (!SURVEY[2].o.some(o => o[0] === v)) return; ONB2.plan = v; onb2Go(1); },
-  onb2medno: () => { ONB2.med = []; ONB2.medYes = false; ONB2.medQ = false; onb2Go(1); },
+  onb2medno: () => { ONB2.med = []; ONB2.lim = []; ONB2.limGym = false; ONB2.limNote = ''; ONB2.medYes = false; ONB2.medQ = false; onb2Go(1); },
   onb2medyes: () => { ONB2.medYes = true; ONB2.medQ = false; renderOnboardingModal(); },
   onb2med: v => { if (!MED_TXT[v]) return; ONB2.med = ONB2.med.includes(v) ? ONB2.med.filter(x => x !== v) : ONB2.med.concat(v); renderOnboardingModal(); },
   // предложение Pro — только при самом первом запуске; повторная настройка и переход с 13.x его не показывают
@@ -8208,6 +8250,159 @@ function render() {
     console.error(err);
   }
 }
+
+/* =========================================================
+   14.2 · ОГРАНИЧЕНИЯ ДЛЯ НАГРУЗКИ (грыжа, суставы, сердце, операция)
+   Питание при них считается как обычно — обмен веществ не меняется, но худеть только мягко (до 0,5% веса в неделю).
+   Тренировки: по умолчанию — ЛФК и движение по программе врача; силовые — только если врач разрешил,
+   и тогда опасные при этом состоянии упражнения помечены ⚠, не попадают в «Тренировку дня» и в «Заменить».
+   Упражнения ЛФК приложение не придумывает: их подбирает врач под конкретного человека.
+   ========================================================= */
+var LIM_TXT = {
+  spine: { n: 'Позвоночник', sub: 'грыжа, протрузия, боли в спине', who: 'при проблемах со спиной',
+    rule: 'без осевой нагрузки (штанга на плечах, становая, жим стоя), без скручиваний и прыжков' },
+  knees: { n: 'Колени или тазобедренные', sub: 'артроз, травма, боль при нагрузке', who: 'при больных коленях или тазобедренных суставах',
+    rule: 'без прыжков и бега, без глубоких приседаний и выпадов с весом; хорошо подходят плавание, велотренажёр, ходьба' },
+  shoulders: { n: 'Плечи', sub: 'боль, травма, нестабильность', who: 'при больных плечах',
+    rule: 'без жимов над головой, брусьев и тяги к подбородку' },
+  heart: { n: 'Сердце или давление', sub: 'гипертония, болезни сердца', who: 'при болезнях сердца или повышенном давлении',
+    rule: 'без работы до отказа и задержки дыхания — натуживание резко поднимает давление; отдых между подходами 2–3 минуты, нагрузку согласуй с кардиологом' },
+  surgery: { n: 'Операция или травма', sub: 'за последние полгода', who: 'после недавней операции или травмы',
+    rule: 'нагрузку и сроки назначает врач — восстановление идёт по его плану' },
+  other: { n: 'Другое', sub: 'впишу сам', who: 'при ограничениях по здоровью', rule: 'нагрузку согласуй с врачом' }
+};
+var LIM_KEYS = Object.keys(LIM_TXT);
+function limOf(p) { p = p || db.profile; return (Array.isArray(p && p.lim) ? p.lim : []).filter((x, i, a) => LIM_KEYS.includes(x) && a.indexOf(x) === i); }
+function limGate(p) { p = p || db.profile; return limOf(p).length > 0 && !p.limGym; }   // силовые закрыты, пока человек не отметит «врач разрешил»
+const limNoteClean = v => String(v == null ? '' : v).replace(/[<>"'`&]/g, '').replace(/\s+/g, ' ').trim().slice(0, 60);
+/* опасные упражнения: [состояние, условие по названию, причина]. Только то, что принято считать риском в ЛФК и спортивной медицине;
+   при «операции» и «другом» конкретных пометок нет — приложение не знает, что именно нельзя, и честно отправляет к врачу */
+var EX_RISK = [
+  ['spine', /^(становая|приседания со штангой|фронтальные приседания|приседания в машине смита|гакк|выпады со штангой|армейский жим|шраги со штангой|подъём на носки стоя|подъём на носки «ослик»)/, 'осевая нагрузка на позвоночник'],
+  ['spine', /^(румынская тяга|мёртвая тяга|тяга штанги в наклоне|тяга т-грифа в наклоне)/, 'наклон с весом нагружает поясницу'],
+  ['spine', /^(скручивания|русские скручивания|подъём прямых|подъём ног|уголок|ролик для пресса|гиперэкстензия)/, 'сгибание или разгибание позвоночника под нагрузкой'],
+  ['spine', /^жим ногами в тренажёре/, 'внизу поясница отрывается от спинки'],
+  ['spine', /^(берпи|прыжки)/, 'ударная нагрузка'],
+  ['knees', /^(приседания со штангой|фронтальные приседания|приседания в машине смита|гакк|болгарские|выпады|жим ногами в тренажёре)/, 'глубокое сгибание колена под весом'],
+  ['knees', /^разгибания ног в тренажёре/, 'большая нагрузка на коленный сустав'],
+  ['knees', /^(берпи|прыжки)/, 'ударная нагрузка на суставы'],
+  ['shoulders', /^(армейский жим|жим гантелей сидя вверх|жим арнольда|жим вверх в тренажёре|жим штанги сидя в машине смита|разгибание рук с гантелью из-за головы)/, 'руки над головой под весом'],
+  ['shoulders', /^(отжимания на брусьях|тяга штанги \/ ez-грифа к подбородку|пуловер)/, 'плечо в крайнем положении под весом'],
+  ['heart', /^(становая|приседания со штангой|фронтальные приседания|гакк|жим ногами в тренажёре|выпады со штангой)/, 'тяжёлое базовое: натуживание резко поднимает давление'],
+  ['heart', /^жим штанги головой вниз/, 'голова ниже сердца — давление выше'],
+  ['heart', /^(берпи|прыжки)/, 'резкий скачок пульса']
+];
+const LIM_SHORT = { spine: 'спина', knees: 'колени', shoulders: 'плечи', heart: 'давление' };
+function exRisk(name, p) {
+  const L = limOf(p); if (!L.length) return null;
+  const n = String(name || '').trim().toLowerCase(); if (!n) return null;
+  for (const [k, re, why] of EX_RISK) if (L.includes(k) && re.test(n)) return { k, why };
+  return null;
+}
+function exRiskTag(name) { const r = exRisk(name); return r ? ' <b class="risk">⚠ ' + LIM_SHORT[r.k] + ': ' + r.why + '</b>' : ''; }
+/* шаблон тренировки без опасного: опасное меняем на самое похожее безопасное, если такого нет — убираем */
+function safeExs(exs) {
+  const out = [], swapped = [];
+  (exs || []).forEach(n => {
+    if (!exRisk(n)) { if (!out.includes(n)) out.push(n); return; }
+    const c = swapCands(n).find(x => !exRisk(x.n) && !out.includes(x.n) && !(exs || []).includes(x.n));
+    if (c) { out.push(c.n); swapped.push([n, c.n]); } else swapped.push([n, '']);
+  });
+  return { exs: out, swapped };
+}
+const limNames = p => limOf(p).map(k => k === 'other' && (p || db.profile).limNote ? (p || db.profile).limNote : LIM_TXT[k].n.toLowerCase());
+function limRulesHtml(p) {
+  const L = limOf(p); if (!L.length) return '';
+  const note = String((p || db.profile).limNote || '').toLowerCase(), dup = typeof LIM_GUESS !== 'undefined' && LIM_GUESS.some(([k, re]) => L.includes(k) && re.test(note));
+  return '<ul class="lim-rules">' + L.filter(k => !(k === 'other' && dup)).map(k => '<li><b>' + esc(k === 'other' && (p || db.profile).limNote ? (p || db.profile).limNote : LIM_TXT[k].n) + ':</b> ' + LIM_TXT[k].rule + '.</li>').join('') + '</ul>';
+}
+/* «здоровое похудение» при лишнем весе и ограничении: первый этап — 5% (ИМТ 25–30) или 10% (ИМТ ≥ 30) веса, но не ниже верхней границы нормы,
+   темп 0,5% веса в неделю — так советуют клинические рекомендации по ожирению (5–10% за 3–6 месяцев) */
+function healthyLoss(p, w) {
+  p = p || db.profile; w = +w || 0;
+  if (!limOf(p).length || medOf(p).length || (p.age || 25) < 18 || !(w > 0) || !(p.height > 0)) return null;
+  const h2 = Math.pow(p.height / 100, 2), bmi = w / h2; if (bmi < 25) return null;
+  const tw = +p.targetWeight || w; if ((p.goalMode === 'cut' || p.goalMode === 'recomp') && tw < w - .5) return null;   // уже худеет
+  const targ = Math.max(Math.round(25 * h2 * 2) / 2, Math.round(w * (bmi >= 30 ? .9 : .95) * 2) / 2);
+  if (targ > w - 1) return null;
+  return { targ, kgw: Math.round(w * .005 * 10) / 10, bmi, weeks: Math.ceil((w - targ) / (w * .005)) };
+}
+function healthyLossHtml(h, yes, no) {
+  if (!h) return '';
+  const L = limOf(ONB2 && ONB2.lim && !db.profile.onboarded ? { lim: ONB2.lim } : db.profile);
+  const parts = [L.includes('spine') && 'позвоночник', L.includes('knees') && 'колени и суставы', L.includes('heart') && 'сердце и сосуды'].filter(Boolean);
+  const why = 'на ' + (parts.length ? parts.join(', ').replace(/, ([^,]*)$/, ' и $1') : 'сердце, суставы и позвоночник');
+  return '<div class="prev hl"><b>Предлагаю здоровое похудение</b><small>Лишний вес — дополнительная нагрузка ' + why + '. Уже −5–10% веса заметно её снижают. ' +
+    'Первый этап: до ' + n1c(h.targ) + ' кг, примерно −' + n1c(h.kgw) + ' кг в неделю (' + h.weeks + ' ' + ruPl(h.weeks, 'неделя', 'недели', 'недель') + '), без жёстких диет.</small>' +
+    '<div class="hl-b"><button class="btn main sm" data-a="' + yes + '">Считать похудение</button><button class="btn ghost sm" data-a="' + no + '">Оставить как есть</button></div></div>';
+}
+/* похудение при ограничении — только спокойно или умеренно: быстрый темп считаем по пределу 0,5% */
+PACE.lossLim = { ...PACE.loss, warn: .5, max: .5, lim: 1, opts: PACE.loss.opts.filter(o => o.pct <= .5) };
+
+/* ЛФК в кардио: по времени, ≈ 2,8 MET (лёгкая гимнастика, Compendium of Physical Activities) */
+W_CARDIO.lfk = ['ЛФК', .3, ['core', 'back']];
+CZ.lfk = 'ab .4 ob .3 rh .3 gl .3 la .2'; CK.lfk = .25;
+
+/* профиль: ограничения для нагрузки */
+let LIM_OPEN = false;
+function limChipsHtml() {
+  const p = db.profile, cur = limOf(p), h = healthyLoss(p, bodyW(todayKey()));
+  const head = '<h3 style="margin:14px 0 6px;font-size:14px">Ограничения для нагрузки</h3>';
+  if (!cur.length && !LIM_OPEN) return head + '<div class="med-none"><span>Нет</span><button class="lnk" data-a="limopen">Изменить</button></div>';
+  return head + '<div class="chips">' + LIM_KEYS.map(k => '<button class="chip' + (cur.includes(k) ? ' on' : '') + '" data-a="plim" data-v="' + k + '" aria-pressed="' + cur.includes(k) + '">' + LIM_TXT[k].n + '</button>').join('') + '</div>' +
+    (cur.includes('other') ? '<input class="inp" data-i="plimnote" maxlength="60" autocomplete="off" placeholder="Что именно? Например, сколиоз" value="' + esc(p.limNote || '') + '" style="margin-top:8px">' : '') +
+    (cur.length ? '<button class="tog-row" data-a="plimgym" role="switch" aria-checked="' + !!p.limGym + '"><span><b>Врач разрешил силовые</b><small>' + (p.limGym ? 'Опасные упражнения помечены ⚠ и не попадают в подбор' : 'Пока выключено: в тренировках — ЛФК и движение') + '</small></span><i class="tsw' + (p.limGym ? ' on' : '') + '"></i></button>' +
+      limRulesHtml(p) + healthyLossHtml(p.hlNo ? null : h, 'phl', 'phlno') : '') +
+    '<div class="cap" style="margin-top:6px">Питание считается как обычно, худеть — только мягко. Это не замена врачу.' + (!cur.length ? ' <button class="lnk" data-a="limclose">Ограничений нет</button>' : '') + '</div>';
+}
+function limChanged() { db.profile.keepChoice = false; db.profile.hlNo = false; save(); fill('pLim', limChipsHtml()); updateProgressLive(); }
+
+Object.assign(A, {
+  /* первый запуск */
+  onb2lim: v => { if (!LIM_TXT[v]) return; ONB2.lim = ONB2.lim.includes(v) ? ONB2.lim.filter(x => x !== v) : ONB2.lim.concat(v); renderOnboardingModal(); },
+  onb2limgym: () => { ONB2.limGym = !ONB2.limGym; renderOnboardingModal(); },
+  onb2limpick: v => { if (!LIM_TXT[v] || ONB2.lim.includes(v)) return; ONB2.lim = ONB2.lim.concat(v); renderOnboardingModal(); },
+  onb2hl: () => { const h = onb2With(() => healthyLoss(db.profile, ONB2.cur)); if (!h) return; ONB2.goal = 'cut'; ONB2.targ = h.targ; ONB2.paceId = 'mid'; ONB2.hlNo = false; renderOnboardingModal(); buzz(8); },
+  onb2hlno: () => { ONB2.hlNo = true; renderOnboardingModal(); },
+  /* профиль */
+  limopen: () => { LIM_OPEN = true; fill('pLim', limChipsHtml()); },
+  limclose: () => { LIM_OPEN = false; fill('pLim', limChipsHtml()); },
+  plim: v => {
+    if (!LIM_TXT[v]) return; const cur = limOf(db.profile);
+    db.profile.lim = cur.includes(v) ? cur.filter(x => x !== v) : cur.concat(v); if (!db.profile.lim.length) db.profile.limGym = false; LIM_OPEN = true; limChanged();
+  },
+  plimgym: () => {
+    if (db.profile.limGym) { db.profile.limGym = false; save(); fill('pLim', limChipsHtml()); return; }
+    askBox('Врач разрешил тебе силовые тренировки? Упражнения, опасные ' + LIM_TXT[limOf().find(k => k !== 'other') || 'other'].who + ', будут помечены ⚠ и не попадут в «Тренировку дня» и замену.',
+      [['Да, разрешил', () => { db.profile.limGym = true; save(); render(); }, 1], ['Отмена']]);
+  },
+  phl: () => { const h = healthyLoss(db.profile, bodyW(todayKey())); if (!h) return; Object.assign(db.profile, { goalMode: 'cut', targetWeight: h.targ, paceId: 'mid', paceKgW: 0, keepChoice: false }); save(); render(); toast('План: здоровое похудение', { icon: 'check', sub: 'До ' + n1c(h.targ) + ' кг, примерно −' + n1c(h.kgw) + ' кг в неделю.' }); },
+  phlno: () => { db.profile.hlNo = true; save(); fill('pLim', limChipsHtml()); },
+  /* тренировки */
+  lfkgo: () => { closeSheet(); TR.mode = 'cardio'; TR.cType = 'lfk'; db.settings.tab = 'train'; save(); render(); window.scrollTo(0, 0); }
+});
+Object.assign(H, { plimnote(el) { db.profile.limNote = limNoteClean(el.value); save(); } });
+function limGateHtml() {
+  const p = db.profile, who = limNames(p).join(', ');
+  return '<div class="card t-hero lim-gate"><div class="coach-k" style="color:var(--gold)">🩺 Силовые — после разрешения врача</div><h3>ЛФК и движение</h3>' +
+    '<p>Отмечено: ' + esc(who) + '. Без разрешения врача силовые могут навредить, поэтому тренировку дня я не подбираю. Занимайся по программе врача ЛФК и записывай занятия здесь — калории добавятся к норме.</p>' +
+    '<button class="btn main" data-a="lfkgo">' + ico('plus') + ' Записать ЛФК</button>' +
+    '<button class="btn ghost" data-a="tmode" data-v="cardio" style="margin-top:8px">Ходьба, плавание, велотренажёр</button>' +
+    '<button class="lnk t-alt" data-a="plimgym">Врач разрешил силовые</button>' +
+    '<p class="cap" style="margin-top:10px">Упражнения ЛФК приложение не подбирает: их назначает врач под твою ситуацию. Это не замена врачу.</p></div>';
+}
+function limTrainNoteHtml() {
+  const L = limOf(); if (!L.length || db.profile.limGym !== true) return '';
+  return '<div class="prev warn2 lim-note"><b>🩺 Учитываю ограничения</b>' + limRulesHtml() + '<small>Опасные упражнения помечены ⚠ — в «Тренировку дня» и замену они не попадают.</small></div>';
+}
+
+/* «Другое: грыжа» — подсказываем отметить нужный пункт, чтобы пометки упражнений заработали */
+const LIM_GUESS = [['spine', /грыж|протруз|позвон|спин|поясниц|остеохондр|сколиоз|ишиас|радикулит|шейн/], ['knees', /колен|мениск|тазобедр|связк|артроз|артрит/], ['shoulders', /плеч|ротатор|ключиц/], ['heart', /давлен|гиперто|сердц|аритм|инфаркт|инсульт|стенокард/]];
+function limGuessHtml() {
+  const lim = ONB2.lim || [], note = String(ONB2.limNote || '').toLowerCase(), g = LIM_GUESS.find(([k, re]) => re.test(note) && !lim.includes(k));
+  return g ? '<div class="prev" style="margin-top:8px">Похоже, это про «' + LIM_TXT[g[0]].n.toLowerCase() + '». Отметь этот пункт — тогда помечу опасные упражнения. <button class="lnk" data-a="onb2limpick" data-v="' + g[0] + '">Отметить</button></div>' : '';
+}
+Object.assign(H, { o2ln(el) { ONB2.limNote = limNoteClean(el.value); fill('o2lg', limGuessHtml()); } });
 
 /* --- слушатели --- */
 document.addEventListener('click', e => {
