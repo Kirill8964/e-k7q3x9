@@ -12,6 +12,9 @@
 <meta name="apple-mobile-web-app-title" content="БИО-ФОРМА">
 <title>БИО-ФОРМА 14.0</title>
 <style>
+/* 14.2: отступы сверху/снизу. В Telegram в полноэкранном режиме сверху висят его кнопки «Закрыть» и «⋯» — опускаем приложение ниже них */
+:root{--sat:env(safe-area-inset-top);--sab:env(safe-area-inset-bottom)}
+html.in-tg{overflow-anchor:none;--sat:calc(max(env(safe-area-inset-top),var(--tg-safe-area-inset-top,0px)) + var(--tg-content-safe-area-inset-top,0px));--sab:max(env(safe-area-inset-bottom),var(--tg-safe-area-inset-bottom,0px))}
 /* =========================================================
    БИО-ФОРМА 14.0 — дизайн-система
    Две темы на одних токенах. Цвета только через переменные.
@@ -57,7 +60,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 input,select,textarea{font:inherit;color:inherit}
 [hidden]{display:none!important}
 b,strong{font-weight:650}
-.app{width:100%;max-width:480px;min-height:100vh;padding:calc(10px + env(safe-area-inset-top,0px)) 16px calc(var(--tab-h) + 34px + env(safe-area-inset-bottom,0px));background:radial-gradient(120% 420px at 50% -60px,var(--glow),transparent 70%)}
+.app{width:100%;max-width:480px;min-height:100vh;padding:calc(10px + var(--sat,0px)) 16px calc(var(--tab-h) + 34px + var(--sab,0px));background:radial-gradient(120% 420px at 50% -60px,var(--glow),transparent 70%)}
 .ico{display:inline-flex;width:1.25em;height:1.25em;flex-shrink:0}
 .ico svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .num-t,.tnum{font-variant-numeric:tabular-nums}
@@ -200,7 +203,7 @@ details.more[open] summary::after{transform:rotate(180deg)}
 details.more small{display:block;font-size:12.5px;color:var(--muted);line-height:1.45;margin-top:4px}
 
 /* ---------- нижняя панель ---------- */
-.tabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom,0px));width:calc(100% - 20px);max-width:460px;height:var(--tab-h);display:grid;grid-template-columns:1fr 1fr 76px 1fr 1fr;align-items:center;padding:6px;background:color-mix(in srgb,var(--surface) 92%,transparent);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:26px;box-shadow:var(--sh-2);z-index:30}
+.tabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(10px + var(--sab,0px));width:calc(100% - 20px);max-width:460px;height:var(--tab-h);display:grid;grid-template-columns:1fr 1fr 76px 1fr 1fr;align-items:center;padding:6px;background:color-mix(in srgb,var(--surface) 92%,transparent);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:26px;box-shadow:var(--sh-2);z-index:30}
 .tabbar>button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;height:100%;border-radius:20px;color:var(--muted);font-size:11px;font-weight:650;transition:color .2s}
 .tabbar>button .ico{width:23px;height:23px}
 .tabbar>button.on{color:var(--accent-ink)}
@@ -213,8 +216,8 @@ details.more small{display:block;font-size:12.5px;color:var(--muted);line-height
 /* ---------- лист снизу ---------- */
 .sheet-ov{position:fixed;inset:0;z-index:70;display:flex;align-items:flex-end;justify-content:center;background:rgba(3,6,10,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);animation:fadeIn .2s ease-out}
 :root[data-theme="light"] .sheet-ov{background:rgba(16,26,36,.35)}
-.sheet{width:100%;max-width:480px;max-height:calc(100vh - 36px - env(safe-area-inset-top,0px));display:flex;flex-direction:column;background:var(--surface);border-radius:28px 28px 0 0;border:1px solid var(--line);border-bottom:none;box-shadow:var(--sh-2);animation:sheetUp .28s cubic-bezier(.2,.9,.25,1);padding-bottom:env(safe-area-inset-bottom,0px)}
-.sheet.tall{height:calc(100vh - 36px - env(safe-area-inset-top,0px))}
+.sheet{width:100%;max-width:480px;max-height:calc(100vh - 36px - var(--sat,0px));display:flex;flex-direction:column;background:var(--surface);border-radius:28px 28px 0 0;border:1px solid var(--line);border-bottom:none;box-shadow:var(--sh-2);animation:sheetUp .28s cubic-bezier(.2,.9,.25,1);padding-bottom:var(--sab,0px)}
+.sheet.tall{height:calc(100vh - 36px - var(--sat,0px))}
 .sh-grab{width:40px;height:5px;border-radius:3px;background:var(--line-2);margin:9px auto 4px;flex-shrink:0}
 .sh-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 18px 10px;flex-shrink:0}
 .sh-top h3{font-size:19px}
@@ -227,7 +230,7 @@ details.more small{display:block;font-size:12.5px;color:var(--muted);line-height
 @media (prefers-reduced-motion:reduce){.sheet,.sheet-ov{animation:none}}
 
 /* ---------- тост ---------- */
-.toast{position:fixed;left:50%;bottom:calc(var(--tab-h) + 24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:max-content;max-width:min(440px,calc(100% - 32px));display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line-2);color:var(--text);padding:12px 14px;border-radius:18px;font-size:14px;line-height:1.35;z-index:99;box-shadow:var(--sh-2);animation:toastIn .22s ease-out}
+.toast{position:fixed;left:50%;bottom:calc(var(--tab-h) + 24px + var(--sab,0px));transform:translateX(-50%);width:max-content;max-width:min(440px,calc(100% - 32px));display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line-2);color:var(--text);padding:12px 14px;border-radius:18px;font-size:14px;line-height:1.35;z-index:99;box-shadow:var(--sh-2);animation:toastIn .22s ease-out}
 .toast-t{flex:1;min-width:0}.toast-t small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
 .toast-undo{color:var(--accent-ink);font-weight:750;font-size:13.5px;padding:6px 4px 6px 12px;border-left:1px solid var(--line-2);white-space:nowrap}
 .toast.cele{border-color:var(--warn-line);animation:toastIn .22s ease-out,celePop .6s ease-out .05s}
@@ -237,7 +240,7 @@ details.more small{display:block;font-size:12.5px;color:var(--muted);line-height
 @media (prefers-reduced-motion:reduce){.toast,.toast.cele{animation:none}}
 
 /* ---------- окна ---------- */
-.modal-ov{position:fixed;inset:0;background:var(--bg);z-index:80;display:flex;justify-content:center;align-items:flex-start;overflow-y:auto;padding:calc(10px + env(safe-area-inset-top,0px)) 16px 28px}
+.modal-ov{position:fixed;inset:0;background:var(--bg);z-index:80;display:flex;justify-content:center;align-items:flex-start;overflow-y:auto;padding:calc(10px + var(--sat,0px)) 16px 28px}
 .ask-ov{background:rgba(3,6,10,.6);align-items:center;z-index:95;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
 .modal-card{width:100%;max-width:440px;background:var(--surface);border:1px solid var(--line);border-radius:26px;padding:20px 18px;box-shadow:var(--sh-2)}
 .ask-card p{margin:0 0 16px;line-height:1.5;font-size:15.5px;color:var(--text)}
@@ -493,7 +496,7 @@ h2.dh{justify-content:space-between;font-size:14px;color:var(--text)}h2.dh b{col
 .tpl .ti{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--surface-2);color:var(--accent-ink);flex-shrink:0}
 .tpl .tx{flex:1;min-width:0}.tpl .tx b{display:block;font-size:15px}.tpl .tx small{display:block;font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tpl>.ico{color:var(--muted)}
-.sess{position:sticky;top:calc(6px + env(safe-area-inset-top,0px));z-index:15;display:flex;align-items:center;gap:10px;padding:10px 10px 10px 14px;margin:0 0 12px;border-radius:20px;background:color-mix(in srgb,var(--surface) 94%,transparent);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid var(--accent-line);box-shadow:var(--sh-2)}
+.sess{position:sticky;top:calc(6px + var(--sat,0px));z-index:15;display:flex;align-items:center;gap:10px;padding:10px 10px 10px 14px;margin:0 0 12px;border-radius:20px;background:color-mix(in srgb,var(--surface) 94%,transparent);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid var(--accent-line);box-shadow:var(--sh-2)}
 .sess .st{flex:1;min-width:0}
 .sess .st small{display:block;font-size:11.5px;font-weight:700;color:var(--accent-ink);letter-spacing:.4px;text-transform:uppercase}
 .sess .st b{display:block;font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.5px;line-height:1.15}
@@ -525,11 +528,11 @@ h2.dh{justify-content:space-between;font-size:14px;color:var(--text)}h2.dh b{col
 .ex-eff{margin-top:8px;line-height:1.4}.ex-eff:empty{display:none}
 .rep-btn{margin-top:10px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left}
 .rep-btn small{font-size:12.5px;color:var(--muted);font-weight:500}
-.tbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--tab-h) + 20px + env(safe-area-inset-bottom,0px));width:calc(100% - 20px);max-width:460px;display:flex;align-items:center;gap:10px;padding:8px 8px 8px 16px;background:color-mix(in srgb,var(--surface) 95%,transparent);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid var(--accent-line);border-radius:20px;box-shadow:var(--sh-2);z-index:25;font-size:13.5px;color:var(--text-2)}
+.tbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--tab-h) + 20px + var(--sab,0px));width:calc(100% - 20px);max-width:460px;display:flex;align-items:center;gap:10px;padding:8px 8px 8px 16px;background:color-mix(in srgb,var(--surface) 95%,transparent);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid var(--accent-line);border-radius:20px;box-shadow:var(--sh-2);z-index:25;font-size:13.5px;color:var(--text-2)}
 .tbar[hidden]{display:none}
 .tbar span{flex:1}
 .tbar .btn{margin:0;width:auto;padding:10px 18px;min-height:44px;flex-shrink:0}
-.app:has(.tbar:not([hidden])){padding-bottom:calc(var(--tab-h) + 104px + env(safe-area-inset-bottom,0px))}
+.app:has(.tbar:not([hidden])){padding-bottom:calc(var(--tab-h) + 104px + var(--sab,0px))}
 .excat{margin-top:10px;background:var(--surface);border:1px solid var(--accent-line);border-radius:var(--r-lg);padding:12px;box-shadow:var(--sh-1)}
 .excat-top{display:flex;justify-content:space-between;align-items:center;font-size:14.5px;font-weight:650;margin:0 2px 8px}
 .excat-top button{color:var(--accent-ink);font-weight:700;font-size:13.5px;padding:4px 2px}
@@ -544,7 +547,7 @@ h2.dh{justify-content:space-between;font-size:14px;color:var(--text)}h2.dh b{col
 .excat-i i{flex-shrink:0;width:22px;height:22px;margin-top:0;border-radius:7px;border:1.6px solid var(--accent-line);background:var(--input)}
 .excat-i.on{background:var(--accent-soft)}
 .excat-i.on i{background:var(--accent);border-color:var(--accent);box-shadow:inset 0 0 0 3.5px var(--surface)}
-.excat-add{position:sticky;bottom:calc(var(--tab-h) + 24px + env(safe-area-inset-bottom,0px));z-index:2}
+.excat-add{position:sticky;bottom:calc(var(--tab-h) + 24px + var(--sab,0px));z-index:2}
 .bm-ex{margin-top:8px}
 .ws-head{display:flex;justify-content:space-between;align-items:center;width:100%;gap:10px;text-align:left;font-size:14px;font-weight:700;color:var(--text)}
 .ws-head span{display:inline-flex;align-items:center;gap:6px}
@@ -760,7 +763,7 @@ h2.dh{justify-content:space-between;font-size:14px;color:var(--text)}h2.dh b{col
 .onb-fld input::placeholder{color:var(--line-2)}
 .onb-fld .fu{font-size:15px;color:var(--muted);font-weight:650;min-width:28px}
 .onb-err{color:var(--bad);font-size:14px;margin-top:12px;min-height:20px;line-height:1.4}
-.onb-foot{padding:12px 0 calc(8px + env(safe-area-inset-bottom,0px))}
+.onb-foot{padding:12px 0 calc(8px + var(--sab,0px))}
 .onb-foot .btn{margin-top:0;min-height:56px;font-size:16.5px;border-radius:18px}
 .onb-foot .lnk{display:block;margin:14px auto 0;font-size:14.5px;color:var(--muted)}
 .onb-hero{position:relative;margin:4px -6px 0;height:250px;display:flex;justify-content:center;align-items:flex-end;overflow:hidden}
@@ -799,7 +802,7 @@ h2.dh{justify-content:space-between;font-size:14px;color:var(--text)}h2.dh b{col
 @media (max-width:370px){.app{padding-left:12px;padding-right:12px}.ring{width:126px;height:126px}.rg-c b{font-size:30px}.hero-row{gap:12px}.grid3{gap:7px}.hab{padding:11px 10px}.hab b{font-size:18px}.ttl h1{font-size:26px}.onb-h{font-size:25px}}
 @media (min-width:700px){.app{padding-top:24px}}
 
-#sheet:not([hidden]) ~ .toast{bottom:auto;top:calc(12px + env(safe-area-inset-top,0px))}
+#sheet:not([hidden]) ~ .toast{bottom:auto;top:calc(12px + var(--sat,0px))}
 
 /* ---------- 14.0 ночь: первые шаги, «как обычно», конфетти ---------- */
 .confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:300}
@@ -5091,7 +5094,7 @@ function toast(msg, o) {
     t.appendChild(b);
   }
   const tb = document.getElementById('tBar');   // 13.0: над плашкой «Записать тренировку», чтобы не перекрывать её
-  if (tb && !tb.hidden && tb.getBoundingClientRect().height > 0) t.style.bottom = 'calc(' + (tb.offsetHeight + 104) + 'px + env(safe-area-inset-bottom, 0px))';
+  if (tb && !tb.hidden && tb.getBoundingClientRect().height > 0) t.style.bottom = 'calc(' + (tb.offsetHeight + 104) + 'px + var(--sab,0px))';
   document.body.appendChild(t);
   if (o.cele && navigator.vibrate) { try { navigator.vibrate(25); } catch (e) {} }
   TOAST_T = setTimeout(() => t.remove(), o.undo ? 5000 : o.cele ? 4500 : 2600);
@@ -5823,6 +5826,7 @@ var TG = null;
 function tgLaunched() { try { return /tgWebApp/.test(location.hash) || !!window.TelegramWebviewProxy || !!sessionStorage.getItem('__telegram__initParams'); } catch (e) { return false; } }
 function tgLoad() {
   if (!tgLaunched() || document.getElementById('tgsdk')) return;
+  document.documentElement.classList.add('in-tg');
   const s = document.createElement('script'); s.id = 'tgsdk'; s.src = 'https://telegram.org/js/telegram-web-app.js'; s.async = true; s.onload = tgInit;
   document.head.appendChild(s);
 }
@@ -5833,7 +5837,9 @@ function tgInit() {
   try { w.ready(); } catch (e) {}
   try { w.expand(); } catch (e) {}
   try { if (tgV('7.7')) w.disableVerticalSwipes(); } catch (e) {}   // прокрутка вниз не сворачивает приложение
-  try { if (tgV('6.1')) w.BackButton.onClick(() => { if (SHEET) closeSheet(); }); } catch (e) {}
+  // «Назад» Telegram: закрывает открытый лист, а в первом запуске — возвращает на прошлый шаг
+  try { if (tgV('6.1')) w.BackButton.onClick(() => { if (SHEET) { closeSheet(); return; } const b = tgOnbBack(); if (b) b.click(); }); } catch (e) {}
+  try { const mo = new MutationObserver(tgBack); ['#onbModal', '#sheet'].forEach(sel => { const el = qs(sel); if (el) mo.observe(el, { childList: true, attributes: true, attributeFilter: ['hidden'] }); }); } catch (e) {}
   // на телефоне Telegram не даёт мини-приложениям скачивать файлы — говорим об этом честно, а не делаем вид, что сохранили
   if (['android', 'android_x', 'ios'].includes(w.platform)) document.addEventListener('click', e => {
     const a = e.target && e.target.closest && e.target.closest('a[download]'); if (!a) return;
@@ -5842,7 +5848,8 @@ function tgInit() {
   tgColors(); tgBack();
 }
 function tgColors() { if (!TG) return; const c = document.documentElement.dataset.theme === 'light' ? '#f2f4f7' : '#0b0e12'; try { if (tgV('6.1')) { TG.setHeaderColor(c); TG.setBackgroundColor(c); } if (tgV('7.10')) TG.setBottomBarColor(c); } catch (e) {} }
-function tgBack() { if (!TG || !tgV('6.1')) return; try { if (SHEET) TG.BackButton.show(); else TG.BackButton.hide(); } catch (e) {} }
+const tgOnbBack = () => document.querySelector('#onbModal:not([hidden]) [data-a="onb2back"]');
+function tgBack() { if (!TG || !tgV('6.1')) return; try { if (SHEET || tgOnbBack()) TG.BackButton.show(); else TG.BackButton.hide(); } catch (e) {} }
 tgLoad();
 
 function openSheet(id, opt) { SHEET = { id, opt: opt || {} }; paintSheet(); buzz(6); }
